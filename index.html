@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escala de Departamentos - Editável</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bibliotecas para exportação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVBL5gI9kDXG3VifAgnvpCmCKspA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" xintegrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .input-style {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.2s ease-in-out;
+        }
+        .input-style:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+        .header-input {
+            background-color: transparent;
+            border: 1px solid transparent;
+            text-align: center;
+        }
+        .header-input:focus {
+            background-color: white;
+            border-color: #d1d5db;
+        }
+        .department-tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .department-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 md:p-6">
+    <div class="w-full max-w-6xl bg-white rounded-lg shadow-xl p-6 md:p-8">
+        <header class="text-center border-b pb-4 mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Escala de Departamentos</h1>
+            <div class="flex flex-col sm:flex-row items-center justify-center mt-2 space-y-2 sm:space-y-0 sm:space-x-2">
+                 <input type="text" id="location-input" value="Burn Guaianases" class="header-input text-lg md:text-xl font-medium text-gray-600 rounded px-2 py-1 w-auto">
+                 <span class="text-lg md:text-xl font-medium text-gray-600 hidden sm:inline">-</span>
+                 <input type="text" id="month-year-input" value="Outubro 2025" class="header-input text-lg md:text-xl font-medium text-gray-600 rounded px-2 py-1 w-auto">
+            </div>
+        </header>
+
+        <main>
+            <!-- Abas de Departamento -->
+            <div id="department-tabs" class="flex border-b mb-4"></div>
+
+            <div class="w-full overflow-x-auto border border-gray-200 rounded-lg">
+                <table class="min-w-full bg-white">
+                    <thead id="table-head" class="bg-gray-50"></thead>
+                    <tbody id="escala-tbody" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+            <div class="mt-6">
+                <button onclick="addRow()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md text-lg">
+                    + Adicionar Data
+                </button>
+            </div>
+             <!-- Seção de Exportação -->
+            <div class="mt-6 border-t pt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Exportar</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-base font-medium text-gray-700 mb-2">Escala Completa</h4>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button onclick="exportSchedule('pdf', 'all', event)" class="w-full sm:w-auto flex-1 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out text-base flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>PDF
+                            </button>
+                            <button onclick="exportSchedule('jpg', 'all', event)" class="w-full sm:w-auto flex-1 bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out text-base flex items-center justify-center gap-2">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>JPG
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 id="export-dept-title" class="text-base font-medium text-gray-700 mb-2">Apenas Iluminação</h4>
+                         <div class="flex flex-col sm:flex-row gap-2">
+                            <button onclick="exportSchedule('pdf', 'department', event)" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out text-base flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>PDF
+                            </button>
+                            <button onclick="exportSchedule('jpg', 'department', event)" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out text-base flex items-center justify-center gap-2">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>JPG
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="mt-8 border-t pt-6">
+            <div id="team-management">
+                <h3 id="team-management-title" class="text-lg font-semibold text-gray-800 mb-3">Gerenciar Equipe</h3>
+                <div id="team-list" class="flex flex-wrap gap-2 mb-4"></div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="new-member-input" placeholder="Digite um novo nome" class="input-style flex-grow" onkeydown="if(event.key==='Enter') addTeamMember()">
+                    <button onclick="addTeamMember()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">
+                        Adicionar Membro
+                    </button>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3 border-t pt-6">Observações:</h3>
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <textarea id="observacoes" rows="4" class="input-style w-full text-gray-600 bg-white" placeholder="Adicione aqui qualquer nota importante para todos os departamentos."></textarea>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+    // 1. Definições Iniciais e Estado da Aplicação
+    let activeDepartment = "Iluminação";
+    let teams = {
+        "Iluminação": ["Gabriel", "Andrew", "Erick", "Vinicius"],
+        "Projeção": ["Walter", "Jesse"],
+        "Mídia": ["Saul", "Kim", "Mike", "Lalo"]
+    };
+    let scheduleData = {}; // Estrutura: { "2025-10-02": { "Iluminação": "Gabriel", "Mídia": { "Foto": "Saul" ... } } }
+    const initialDates = ["2025-10-02", "2025-10-04", "2025-10-05", "2025-10-09", "2025-10-12", "2025-10-16", "2025-10-18", "2025-10-19", "2025-10-23", "2025-10-26", "2025-10-30"];
+    
+    // 2. Funções de Inicialização e Renderização Principal
+    document.addEventListener('DOMContentLoaded', () => {
+        initialDates.forEach(date => { scheduleData[date] = {}; });
+        createTabs();
+        switchDepartment("Iluminação");
+    });
+
+    function createTabs() {
+        const tabsContainer = document.getElementById('department-tabs');
+        tabsContainer.innerHTML = '';
+        Object.keys(teams).forEach(dept => {
+            const tab = document.createElement('div');
+            tab.textContent = dept;
+            tab.className = 'department-tab';
+            tab.onclick = () => switchDepartment(dept);
+            tabsContainer.appendChild(tab);
+        });
+    }
+
+    function switchDepartment(dept) {
+        activeDepartment = dept;
+        document.querySelectorAll('.department-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.textContent === dept);
+        });
+        renderTable();
+        renderTeamList();
+        document.getElementById('team-management-title').textContent = `Gerenciar Equipe: ${dept}`;
+        document.getElementById('export-dept-title').textContent = `Apenas ${dept}`;
+    }
+
+    function renderTable() {
+        renderTableHeader();
+        const tbody = document.getElementById('escala-tbody');
+        tbody.innerHTML = '';
+        Object.keys(scheduleData).sort().forEach(date => addRowUI(date));
+    }
+
+    function renderTableHeader() {
+        const thead = document.getElementById('table-head');
+        let headerHTML = `<tr><th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Data</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Dia da Semana</th>`;
+        if (activeDepartment === 'Mídia') {
+            headerHTML += `<th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider min-w-[200px]">Foto</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider min-w-[200px]">Story</th>`;
+        } else {
+            headerHTML += `<th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider min-w-[200px]">Equipe Responsável</th>`;
+        }
+        headerHTML += `<th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Ações</th></tr>`;
+        thead.innerHTML = headerHTML;
+    }
+
+    // 3. Funções de Gerenciamento da Tabela (UI)
+    function addRow() {
+        const dateStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        if (!scheduleData[dateStr]) {
+            scheduleData[dateStr] = {};
+            renderTable();
+        }
+    }
+    
+    function removeDate(date) {
+        if (confirm(`Tem certeza que deseja remover a data ${formatDateForExport(date)} de toda a escala?`)) {
+            delete scheduleData[date];
+            renderTable();
+        }
+    }
+
+    function addRowUI(date) {
+        const tbody = document.getElementById('escala-tbody');
+        const row = tbody.insertRow();
+        row.className = "hover:bg-gray-50 transition duration-150 group";
+        row.dataset.date = date;
+        const dateCell = row.insertCell();
+        dateCell.className = 'px-6 py-4 whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50 z-10';
+        dateCell.innerHTML = `<input type="date" value="${date}" class="input-style w-36" onchange="updateDate(this, '${date}')">`;
+        const dayOfWeekCell = row.insertCell();
+        dayOfWeekCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-700';
+        updateDayOfWeek(date, dayOfWeekCell);
+        const teamCell = row.insertCell();
+        teamCell.className = 'px-6 py-4 whitespace-nowrap';
+        if (activeDepartment === 'Mídia') {
+            row.insertCell().className = 'px-6 py-4 whitespace-nowrap';
+            teamCell.innerHTML = createSelect('Foto', date);
+            row.cells[3].innerHTML = createSelect('Story', date);
+        } else {
+            teamCell.innerHTML = createSelect(activeDepartment, date);
+        }
+        const actionsCell = row.insertCell();
+        actionsCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
+        actionsCell.innerHTML = `<button onclick="removeDate('${date}')" class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100" aria-label="Remover Data"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>`;
+    }
+    
+    // 4. Funções de Gerenciamento de Dados
+    function updateDate(input, oldDate) {
+        const newDate = input.value;
+        if (newDate && newDate !== oldDate) {
+            if (scheduleData[newDate]) {
+                alert('Esta data já existe na escala. Escolha outra data.');
+                input.value = oldDate;
+                return;
+            }
+            scheduleData[newDate] = scheduleData[oldDate];
+            delete scheduleData[oldDate];
+            renderTable();
+        }
+    }
+
+    function updateDayOfWeek(dateString, cell) {
+        if (!dateString) { cell.textContent = '...'; return; }
+        const date = new Date(dateString + 'T00:00:00');
+        cell.textContent = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date).replace(/^\w/, c => c.toUpperCase());
+    }
+
+    function createSelect(role, date) {
+        const team = teams[activeDepartment];
+        const assignments = scheduleData[date] || {};
+        let selectedValue = (activeDepartment === 'Mídia') ? (assignments[activeDepartment]?.[role] || '') : (assignments[activeDepartment] || '');
+        let options = team.map(member => `<option value="${member}" ${member === selectedValue ? 'selected' : ''}>${member}</option>`).join('');
+        return `<select class="input-style" onchange="updateAssignment('${date}', '${role}', this.value)"><option value="">Selecione...</option>${options}</select>`;
+    }
+    
+    function updateAssignment(date, role, value) {
+        if (!scheduleData[date]) scheduleData[date] = {};
+        if (activeDepartment === 'Mídia') {
+            if (!scheduleData[date][activeDepartment]) scheduleData[date][activeDepartment] = {};
+            scheduleData[date][activeDepartment][role] = value;
+        } else {
+            scheduleData[date][activeDepartment] = value;
+        }
+    }
+    
+    // 5. Funções de Gerenciamento de Equipe
+    function addTeamMember() {
+        const input = document.getElementById('new-member-input');
+        const newName = input.value.trim();
+        if (newName && !teams[activeDepartment].find(m => m.toLowerCase() === newName.toLowerCase())) {
+            teams[activeDepartment].push(newName);
+            input.value = '';
+            renderTeamList();
+            renderTable();
+        }
+        input.focus();
+    }
+
+    function removeTeamMember(nameToRemove) {
+        teams[activeDepartment] = teams[activeDepartment].filter(member => member !== nameToRemove);
+        renderTeamList();
+        renderTable();
+    }
+
+    function renderTeamList() {
+        const teamListContainer = document.getElementById('team-list');
+        teamListContainer.innerHTML = '';
+        teams[activeDepartment].forEach(member => {
+            const tag = document.createElement('div');
+            tag.className = 'flex items-center bg-gray-200 text-gray-800 text-sm font-medium px-3 py-1 rounded-full';
+            tag.innerHTML = `<span>${member}</span><button onclick="removeTeamMember('${member}')" class="ml-2 text-red-500 hover:text-red-700 font-bold leading-none focus:outline-none">&times;</button>`;
+            teamListContainer.appendChild(tag);
+        });
+    }
+
+    // 6. Funções de Exportação
+    function formatDateForExport(dateString) {
+        if (!dateString) return '';
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    }
+
+    async function exportSchedule(format, scope = 'all', event) {
+        const exportButton = event.currentTarget;
+        const originalButtonContent = exportButton.innerHTML;
+        exportButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Exportando...`;
+        exportButton.disabled = true;
+
+        const exportContainer = document.createElement('div');
+        Object.assign(exportContainer.style, { position: 'absolute', left: '-9999px', top: '0', width: scope === 'all' ? '1000px' : '800px', padding: '40px', backgroundColor: 'white' });
+        
+        const titleHTML = `<div style="text-align: center; border-bottom: 1px solid #eee; padding-bottom: 16px; margin-bottom: 24px;"><h1 style="font-size: 28px; font-weight: 700;">${document.querySelector('h1').textContent}</h1><h2 style="font-size: 20px; font-weight: 500; color: #4b5563;">${document.getElementById('location-input').value} - ${document.getElementById('month-year-input').value}</h2></div>`;
+        
+        let tableHeaderHTML = '<thead><tr>';
+        let tableBodyHTML = '<tbody>';
+        const baseHeaderStyle = "padding:10px; text-align:left; font-size:12px; font-weight:700; background-color:#f9fafb; border-bottom:1px solid #e5e7eb;";
+        const cellStyle = "padding:10px; border-bottom:1px solid #e5e7eb;";
+
+        if (scope === 'department') {
+            tableHeaderHTML += `<th style="${baseHeaderStyle}">Data</th><th style="${baseHeaderStyle}">Dia</th>`;
+            if (activeDepartment === 'Mídia') {
+                tableHeaderHTML += `<th style="${baseHeaderStyle}">Foto</th><th style="${baseHeaderStyle}">Story</th>`;
+            } else {
+                tableHeaderHTML += `<th style="${baseHeaderStyle}">${activeDepartment}</th>`;
+            }
+            tableHeaderHTML += '</tr></thead>';
+
+            Object.keys(scheduleData).sort().forEach(date => {
+                const assignments = scheduleData[date] || {};
+                const dayOfWeek = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(new Date(date + 'T00:00:00')).replace('.', '').replace(/^\w/, c => c.toUpperCase());
+                let rowContent = '';
+                 if (activeDepartment === 'Mídia') {
+                    rowContent = `<td style="${cellStyle}">${(assignments['Mídia'] && assignments['Mídia']['Foto']) || '---'}</td><td style="${cellStyle}">${(assignments['Mídia'] && assignments['Mídia']['Story']) || '---'}</td>`;
+                } else {
+                    rowContent = `<td style="${cellStyle}">${assignments[activeDepartment] || '---'}</td>`;
+                }
+                tableBodyHTML += `<tr><td style="${cellStyle}">${formatDateForExport(date)}</td><td style="${cellStyle}">${dayOfWeek}</td>${rowContent}</tr>`;
+            });
+
+        } else { // scope 'all'
+            tableHeaderHTML += `<th style="${baseHeaderStyle}">Data</th><th style="${baseHeaderStyle}">Dia</th><th style="${baseHeaderStyle}">Iluminação</th><th style="${baseHeaderStyle}">Projeção</th><th style="${baseHeaderStyle}">Foto (Mídia)</th><th style="${baseHeaderStyle}">Story (Mídia)</th></tr></thead>`;
+            Object.keys(scheduleData).sort().forEach(date => {
+                const assignments = scheduleData[date] || {};
+                const dayOfWeek = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(new Date(date + 'T00:00:00')).replace('.', '').replace(/^\w/, c => c.toUpperCase());
+                tableBodyHTML += `<tr><td style="${cellStyle}">${formatDateForExport(date)}</td><td style="${cellStyle}">${dayOfWeek}</td><td style="${cellStyle}">${assignments['Iluminação'] || '---'}</td><td style="${cellStyle}">${assignments['Projeção'] || '---'}</td><td style="${cellStyle}">${(assignments['Mídia'] && assignments['Mídia']['Foto']) || '---'}</td><td style="${cellStyle}">${(assignments['Mídia'] && assignments['Mídia']['Story']) || '---'}</td></tr>`;
+            });
+        }
+        tableBodyHTML += '</tbody>';
+        
+        const obsHTML = document.getElementById('observacoes').value.trim() ? `<div style="margin-top:24px; border-top:1px solid #eee; padding-top:16px;"><h3 style="font-size:18px; font-weight:600;">Observações:</h3><p style="white-space:pre-wrap; font-size:14px;">${document.getElementById('observacoes').value}</p></div>` : '';
+        exportContainer.innerHTML = `${titleHTML}<table style="width:100%; border-collapse:collapse; font-family:'Inter', sans-serif;">${tableHeaderHTML}${tableBodyHTML}</table>${obsHTML}`;
+        document.body.appendChild(exportContainer);
+
+        try {
+            const canvas = await html2canvas(exportContainer, { scale: 2 });
+            const fileName = `escala_${scope === 'department' ? activeDepartment.toLowerCase() : 'completa'}_${document.getElementById('location-input').value.replace(/\s+/g, '_')}`.toLowerCase();
+            const orientation = scope === 'department' ? 'portrait' : 'landscape';
+
+            if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: orientation, unit: 'px', format: [canvas.width, canvas.height] });
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`${fileName}.pdf`);
+            } else {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.download = `${fileName}.jpg`;
+                link.click();
+            }
+        } catch (error) {
+            console.error("Erro ao exportar:", error);
+            alert("Ocorreu um erro ao exportar.");
+        } finally {
+            document.body.removeChild(exportContainer);
+            exportButton.innerHTML = originalButtonContent;
+            exportButton.disabled = false;
+        }
+    }
+    </script>
+</body>
+</html>
+
